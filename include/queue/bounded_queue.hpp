@@ -1,10 +1,12 @@
 #pragma once
 #include "queue/queue.hpp"
-
+#include <queue>
 namespace dispatcher::queue {
 
 class BoundedQueue : public IQueue {
-    // здесь ваш код
+    std::queue<std::function<void()>> task_queue;
+    int capacity;
+
 public:
     explicit BoundedQueue(int capacity);
 
@@ -12,7 +14,9 @@ public:
 
     std::optional<std::function<void()>> try_pop() override;
 
-    ~BoundedQueue() override;
+    ~BoundedQueue() override = default;
+
+    bool empty();
 };
 
 }  // namespace dispatcher::queue

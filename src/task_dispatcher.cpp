@@ -2,6 +2,9 @@
 
 namespace dispatcher {
 
-// здесь ваш код
+TaskDispatcher::TaskDispatcher(size_t thread_count){}
 
-} // namespace dispatcher
+void TaskDispatcher::schedule(TaskPriority priority, std::function<void()> task){}
+TaskDispatcher::~TaskDispatcher() {}
+
+}  // namespace dispatcher

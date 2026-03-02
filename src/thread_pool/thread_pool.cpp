@@ -2,6 +2,11 @@
 
 namespace dispatcher::thread_pool {
 
-// здесь ваш код
+ThreadPool::ThreadPool(std::shared_ptr<queue::PriorityQueue> prior_q, size_t count_threads) {}
 
-} // namespace dispatcher::thread_pool
+//  wait until end tasks
+ThreadPool::~ThreadPool() {}
+
+void ThreadPool::start_threads() {}
+
+}  // namespace dispatcher::thread_pool

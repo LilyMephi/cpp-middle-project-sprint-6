@@ -1,18 +1,20 @@
 #pragma once
 #include "queue/queue.hpp"
-
+#include <queue>
 namespace dispatcher::queue {
 
 class UnboundedQueue : public IQueue {
-    // здесь ваш код
+    std::queue<std::function<void()>> task_queue;
 public:
-    explicit UnboundedQueue(int capacity);
+    explicit UnboundedQueue(int capacity) {};
 
     void push(std::function<void()> task) override;
 
     std::optional<std::function<void()>> try_pop() override;
 
-    ~UnboundedQueue() override;
+    ~UnboundedQueue() override = default;
+
+    bool empty();
 };
 
 }  // namespace dispatcher::queue

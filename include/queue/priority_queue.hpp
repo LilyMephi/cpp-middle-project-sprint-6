@@ -11,11 +11,18 @@
 #include <optional>
 #include <stdexcept>
 #include <unordered_map>
+#include <condition_variable>
 
 namespace dispatcher::queue {
 
 class PriorityQueue {
-    // здесь ваш код
+    static inline const std::array<QueueOptions, 2> priority_configs = {{{false, std::nullopt}, {false, 100}}};
+
+    std::array<std::unique_ptr<IQueue>, 2> queues;
+    std::condition_variable cv_;
+    mutable std::mutex mutex_;
+    std::atomic<bool> shutdown_flag{false};
+
 public:
     // explicit PriorityQueue(?);
 
@@ -26,7 +33,9 @@ public:
 
     void shutdown();
 
-    ~PriorityQueue();
+    size_t get_idx(TaskPriority priority);
+
+    ~PriorityQueue() = default;
 };
 
 }  // namespace dispatcher::queue
