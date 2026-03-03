@@ -7,18 +7,29 @@
 
 namespace dispatcher::queue {
 
-void UnboundedQueue::push(std::function<void()> task) { task_queue.push(task); }
+void UnboundedQueue::push(std::function<void()> task) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    task_queue_.push(std::move(task));
+    lock.unlock();
+    not_empty_.notify_one();
+}
 
 std::optional<std::function<void()>> UnboundedQueue::try_pop() {
-    if (task_queue.empty()) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (task_queue_.empty()) {
         return std::nullopt;
     }
 
-    auto task = std::move(task_queue.front());
-    task_queue.pop();
+    auto task = std::move(task_queue_.front());
+    task_queue_.pop();
+    lock.unlock();
+
     return task;
 }
 
-bool UnboundedQueue::empty() { return task_queue.empty(); }
+bool UnboundedQueue::empty() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return task_queue_.empty();
+}
 
 }  // namespace dispatcher::queue
