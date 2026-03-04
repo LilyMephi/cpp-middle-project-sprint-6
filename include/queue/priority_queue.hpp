@@ -2,6 +2,7 @@
 #include "queue/bounded_queue.hpp"
 #include "queue/unbounded_queue.hpp"
 #include "types.hpp"
+#include "logger.hpp"
 
 #include <atomic>
 #include <condition_variable>

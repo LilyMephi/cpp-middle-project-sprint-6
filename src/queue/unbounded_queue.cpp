@@ -16,6 +16,7 @@ void UnboundedQueue::push(std::function<void()> task) {
 std::optional<std::function<void()>> UnboundedQueue::try_pop() {
     std::unique_lock<std::mutex> lock(mutex_);
     if (task_queue_.empty()) {
+        Logger::Get().Log("UnboundedQueue::try_pop - queue empty, returning nullopt");
         return std::nullopt;
     }
 

@@ -9,6 +9,7 @@
 #include "queue/priority_queue.hpp"
 #include "thread_pool/thread_pool.hpp"
 #include "types.hpp"
+#include "logger.hpp"
 
 namespace dispatcher {
 
