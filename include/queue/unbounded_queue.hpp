@@ -1,8 +1,8 @@
 #pragma once
 #include "queue/queue.hpp"
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <queue>
 
 namespace dispatcher::queue {
 
@@ -14,7 +14,7 @@ class UnboundedQueue : public IQueue {
     std::condition_variable not_full_;
 
 public:
-    explicit UnboundedQueue() {};
+    explicit UnboundedQueue() = default;
 
     void push(std::function<void()> task) override;
 

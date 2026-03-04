@@ -19,7 +19,7 @@ class TaskDispatcher {
 
 public:
     // TaskDispatcher(size_t thread_count);
-    TaskDispatcher(size_t thread_count, size_t cpacity = 1000);
+    TaskDispatcher(size_t thread_count = std::thread::hardware_concurrency(), size_t cpacity = 1000);
     void schedule(TaskPriority priority, std::function<void()> task);
     ~TaskDispatcher() = default;
 };

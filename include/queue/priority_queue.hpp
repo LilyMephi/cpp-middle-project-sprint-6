@@ -17,12 +17,17 @@ namespace dispatcher::queue {
 
 class PriorityQueue {
 
-    std::array<std::unique_ptr<IQueue>, 2> queues_;
+    BoundedQueue bound_queue;
+    UnboundedQueue unbound_queue;
+
     mutable std::mutex mutex_;
-    std::condition_variable not_shutdown_;
+    std::condition_variable not_empty_;
     std::atomic<bool> shutdown_flag{false};
 
 public:
+    PriorityQueue(const PriorityQueue &) = delete;
+    PriorityQueue &operator=(const PriorityQueue &) = delete;
+
     explicit PriorityQueue(size_t capacity = 1000);
 
     void push(TaskPriority priority, std::function<void()> task);
@@ -31,10 +36,8 @@ public:
     std::optional<std::function<void()>> pop();
 
     void shutdown();
-
-    size_t get_idx(TaskPriority priority);
-
-    ~PriorityQueue() = default;
+    bool empty();
+     ~PriorityQueue() = default;
 };
 
 }  // namespace dispatcher::queue

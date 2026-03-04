@@ -7,7 +7,6 @@ void BoundedQueue::push(std::function<void()> task) {
     not_full_.wait(lock, [this] { return task_queue_.size() < capacity_; });
     task_queue_.push(std::move(task));
     lock.unlock();
-    not_empty_.notify_one();
 }
 
 std::optional<std::function<void()>> BoundedQueue::try_pop() {
@@ -27,6 +26,5 @@ bool BoundedQueue::empty() {
     std::lock_guard<std::mutex> lock(mutex_);
     return task_queue_.empty();
 }
-// BoundedQueue::~BoundedQueue() {}
 
 }  // namespace dispatcher::queue

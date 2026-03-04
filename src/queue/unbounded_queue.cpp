@@ -11,7 +11,6 @@ void UnboundedQueue::push(std::function<void()> task) {
     std::unique_lock<std::mutex> lock(mutex_);
     task_queue_.push(std::move(task));
     lock.unlock();
-    not_empty_.notify_one();
 }
 
 std::optional<std::function<void()>> UnboundedQueue::try_pop() {
@@ -23,7 +22,6 @@ std::optional<std::function<void()>> UnboundedQueue::try_pop() {
     auto task = std::move(task_queue_.front());
     task_queue_.pop();
     lock.unlock();
-
     return task;
 }
 

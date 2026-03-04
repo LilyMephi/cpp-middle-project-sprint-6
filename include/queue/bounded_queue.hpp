@@ -1,8 +1,8 @@
 #pragma once
 #include "queue/queue.hpp"
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <queue>
 namespace dispatcher::queue {
 
 class BoundedQueue : public IQueue {
@@ -10,7 +10,6 @@ class BoundedQueue : public IQueue {
     int capacity_;
 
     mutable std::mutex mutex_;
-    std::condition_variable not_empty_;
     std::condition_variable not_full_;
 
 public:
@@ -22,7 +21,7 @@ public:
 
     ~BoundedQueue() override = default;
 
-    bool empty()  override;
+    bool empty() override;
 };
 
 }  // namespace dispatcher::queue
