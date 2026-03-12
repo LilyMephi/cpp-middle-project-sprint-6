@@ -30,22 +30,21 @@ std::optional<std::function<void()>> PriorityQueue::pop() {
 
     not_empty_.wait(lock, [this]() { return !bound_queue.empty() || !unbound_queue.empty() || shutdown_flag.load(); });
 
-    if (!bound_queue.empty()) {
-        auto item = bound_queue.try_pop();
-        if (item)
-            return item;
-    }
-    if (!unbound_queue.empty()) {
-        auto item = unbound_queue.try_pop();
-        if (item)
-            return item;
-    }
+    auto item_bound = bound_queue.try_pop();
+    if (item_bound)
+        return item_bound;
+
+    auto item_unbound = unbound_queue.try_pop();
+    if (item_unbound)
+        return item_unbound;
+
     Logger::Get().Log("PriorityQueue::pop - queue empty, returning nullopt");
     return std::nullopt;
 }
 
 void PriorityQueue::shutdown() {
     Logger::Get().Log("PriorityQueue::shutdown - shutdown priority queue");
+    std::lock_guard<std::mutex> lock(mutex_);
     shutdown_flag.store(true);
     not_empty_.notify_all();
 }

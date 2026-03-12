@@ -17,19 +17,24 @@ protected:
 };
 
 TEST_F(PriorityQueueTest, PopReturnsHighPriorityFirst) {
-    auto high_task = []() {};
-    auto low_task = []() {};
+    std::atomic<bool> extract_high{false};
+    auto high_task = [&]() { extract_high.store(true); };
+    auto low_task = [&]() {};
 
     pq_->push(TaskPriority::High, high_task);
     pq_->push(TaskPriority::Normal, low_task);
 
     auto result = pq_->pop();
     ASSERT_TRUE(result.has_value());
+    result.value()();
+    ASSERT_TRUE(extract_high.load());
 }
 
 TEST_F(PriorityQueueTest, PopReturnsLowPriorityAfterHigh) {
-    auto high_task = []() {};
-    auto low_task = []() {};
+    std::atomic<bool> extract_high{false};
+    std::atomic<bool> extract_normal{false};
+    auto high_task = [&]() { extract_high.store(true); };
+    auto low_task = [&]() { extract_normal.store(true); };
 
     pq_->push(TaskPriority::High, high_task);
     pq_->push(TaskPriority::Normal, low_task);
@@ -37,18 +42,20 @@ TEST_F(PriorityQueueTest, PopReturnsLowPriorityAfterHigh) {
     // First pop gets high priority
     auto first = pq_->pop();
     ASSERT_TRUE(first.has_value());
-
+    first.value()();
+    ASSERT_TRUE(extract_high.load());
     // Second pop gets Normal priority
     auto second = pq_->pop();
     ASSERT_TRUE(second.has_value());
+    second.value()();
+    ASSERT_TRUE(extract_normal.load());
 }
-
 
 TEST_F(PriorityQueueTest, ShutdownSetsFlagAndNotifies) {
     pq_->shutdown();
 
     auto result = pq_->pop();
-    ASSERT_FALSE(result.has_value()); 
+    ASSERT_FALSE(result.has_value());
 }
 
 TEST_F(PriorityQueueTest, MultipleHighPriorityPopsInOrder) {
@@ -76,10 +83,10 @@ TEST_F(PriorityQueueTest, ConcurrentPushAndPopMaintainsPriority) {
     constexpr size_t num_threads = 4;
     constexpr size_t tasks_per_thread = 10;
 
-    std::vector<std::thread> workers;
+    std::vector<std::jthread> workers;
 
     for (size_t i = 0; i < num_threads; ++i) {
-        workers.emplace_back([this, i, tasks_per_thread, &results]() {
+        workers.emplace_back([this, i, tasks_per_thread, &results](std::stop_token) {
             for (size_t j = 0; j < tasks_per_thread; ++j) {
                 bool is_high = (j % 2 == 0);
                 auto task = [i, j, &results]() { results.push_back(static_cast<int>(i * 10 + j)); };
@@ -88,7 +95,7 @@ TEST_F(PriorityQueueTest, ConcurrentPushAndPopMaintainsPriority) {
         });
     }
 
-    std::thread consumer([&results, this]() {
+    std::jthread consumer([this, &results]( std::stop_token) {
         while (results.size() < num_threads * tasks_per_thread) {
             auto task = this->pq_->pop();
             if (task) {
@@ -100,36 +107,37 @@ TEST_F(PriorityQueueTest, ConcurrentPushAndPopMaintainsPriority) {
     });
 
     for (auto &worker : workers) {
-        worker.join();
+        if (worker.joinable())
+            worker.join();
     }
-    consumer.join();
+    if (consumer.joinable())
+        consumer.join();
 
     ASSERT_EQ(results.size(), num_threads * tasks_per_thread);
 }
 
-
 TEST_F(PriorityQueueTest, BoundQueueCapacityLimitWithThreads) {
-    PriorityQueue pq(3);  
+    PriorityQueue pq(3);
 
     std::atomic<size_t> high_tasks_pushed{0};
     std::atomic<size_t> high_tasks_popped{0};
     constexpr size_t total_high_tasks = 10;
 
-    std::vector<std::thread> producers;
+    std::vector<std::jthread> producers;
     for (size_t i = 0; i < 4; ++i) {
         producers.emplace_back([&pq, &high_tasks_pushed, total_high_tasks]() {
-            for (size_t j = 0; j < total_high_tasks / 4 + 1; ++j) { 
+            for (size_t j = 0; j < total_high_tasks / 4 + 1; ++j) {
                 pq.push(TaskPriority::High, []() { /* empty task */ });
                 high_tasks_pushed.fetch_add(1);
             }
         });
     }
 
-    std::thread consumer([&pq, &high_tasks_popped]() {
+    std::jthread consumer([&pq, &high_tasks_popped]() {
         for (size_t i = 0; i < 10; ++i) {
             auto task = pq.pop();
             if (task.has_value()) {
-                task.value()();  
+                task.value()();
                 high_tasks_popped.fetch_add(1);
             }
         }

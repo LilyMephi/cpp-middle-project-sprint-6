@@ -26,8 +26,8 @@ ThreadPool::~ThreadPool() {
         std::lock_guard<std::mutex> lock(mutex_);
         stop_.store(true);
         priority_queue_->shutdown();
-        not_empty_.notify_all();
     }
+
     for (auto &worker : workers_) {
         try {
             worker.join();
@@ -52,7 +52,6 @@ void ThreadPool::start_threads() {
                               std::string(e.what()));
             stop_.store(true);
             priority_queue_->shutdown();
-            not_empty_.notify_all();
             throw;
         }
     }
@@ -62,9 +61,6 @@ void ThreadPool::worker_thread() {
     while (true) {
         std::optional<std::function<void()>> task;
         {
-            std::unique_lock<std::mutex> lock(mutex_);
-            not_empty_.wait(lock, [this] { return !priority_queue_->empty() || stop_.load(); });
-
             if (stop_.load() && priority_queue_->empty()) {
                 Logger::Get().Log("ThreadPool::worker_thread() - queue empty and get flag to stop");
                 break;

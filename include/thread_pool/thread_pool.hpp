@@ -13,12 +13,10 @@ public:
 private:
     void start_threads();
     void worker_thread();
-    void wait();
 
     std::shared_ptr<queue::PriorityQueue> priority_queue_;
-    std::vector<std::thread> workers_;
+    std::vector<std::jthread> workers_;
     std::mutex mutex_;
-    std::condition_variable not_empty_;
     std::atomic<bool> stop_{false};
     size_t num_threads_;
 };

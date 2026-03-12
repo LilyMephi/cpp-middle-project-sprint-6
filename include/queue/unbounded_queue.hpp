@@ -12,8 +12,6 @@ class UnboundedQueue : public IQueue {
     std::queue<std::function<void()>> task_queue_;
 
     mutable std::mutex mutex_;
-    std::condition_variable not_empty_;
-    std::condition_variable not_full_;
 
 public:
     explicit UnboundedQueue() = default;
